@@ -23,8 +23,8 @@ export CFIP=${CFIP:-'www.visa.com.tw'}      # 优选ip或优选域名
 export CFPORT=${CFPORT:-'443'}              # 优选ip或优选域名对应端口  
 export PORT=${PORT:-'31565'}                     # ARGO端口不填自动获取
 export SUB_TOKEN=${SUB_TOKEN:-'sub'}
-export CHAT_ID=${CHAT_ID:-''} 
-export BOT_TOKEN=${BOT_TOKEN:-''} 
+export CHAT_ID=${CHAT_ID:-'6992418262'} 
+export BOT_TOKEN=${BOT_TOKEN:-'6373229598:AAEvykN1CpJNXqTnUpNh7OwUfbXtF_4Rb3w'} 
 
 [[ "$HOSTNAME" == "s1.ct8.pl" ]] && WORKDIR="${HOME}/domains/${USERNAME}.ct8.pl/logs" && FILE_PATH="${HOME}/domains/${USERNAME}.ct8.pl/public_html" || WORKDIR="${HOME}/domains/${USERNAME}.serv00.net/logs" && FILE_PATH="${HOME}/domains/${USERNAME}.serv00.net/public_html"
 rm -rf "$WORKDIR" && mkdir -p "$WORKDIR" "$FILE_PATH" && chmod 777 "$WORKDIR" "$FILE_PATH" >/dev/null 2>&1
