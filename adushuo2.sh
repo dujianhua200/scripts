@@ -12,17 +12,17 @@ purple() { echo -e "\e[1;35m$1\033[0m"; }
 reading() { read -p "$(red "$1")" "$2"; }
 export LC_ALL=C
 USERNAME=$(whoami)
-HOSTNAME=$(hostname)
-export UUID=${UUID:-'a6b9ecc2-e22f-42ac-bf72-f6550f0ee55d'}
-export NEZHA_SERVER=${NEZHA_SERVER:-''}     # 哪吒面板域名，哪吒3个变量不全不安装
+USERNAME=$(whoami | tr '[:upper:]' '[:lower:]')
+MD5_HASH=$(echo -n "$USERNAME" | md5sum | awk '{print $1}')
+export UUID=${UUID:-${MD5_HASH:0:8}-${MD5_HASH:8:4}-4${MD5_HASH:12:3}-$(echo $((RANDOM % 4 + 8)) | head -c 1)${MD5_HASH:15:3}-${MD5_HASH:19:12}}
+export NEZHA_SERVER=${NEZHA_SERVER:-''}     # 哪吒面板地址
 export NEZHA_PORT=${NEZHA_PORT:-'5555'}     # 哪吒面板通信端口
 export NEZHA_KEY=${NEZHA_KEY:-''}           # 哪吒密钥，端口为{443,8443,2096,2087,2083,2053}其中之一时自动开启tls
 export ARGO_DOMAIN=${ARGO_DOMAIN:-'argo2.hainasi.eu.org'}       # ARGO 固定隧道域名，留空将使用临时隧道
 export ARGO_AUTH=${ARGO_AUTH:-'eyJhIjoiYmMxNzE2NjViNWM3MjRhZTY4ZjBhYWFiNDhlNDQyNzEiLCJ0IjoiODExZDg0N2QtOTMzYi00NDdiLTkzMjctY2RmODEzOTk3Y2MxIiwicyI6IllXSm1NVE14TldRdFlqRTBaUzAwTldNMUxXRTVOV0V0TWpsbE5XTmhZVFJtTXpnNCJ9'}           # ARGO 固定隧道json或token，留空将使用临时隧道
 export CFIP=${CFIP:-'www.visa.com.tw'}      # 优选ip或优选域名
 export CFPORT=${CFPORT:-'443'}              # 优选ip或优选域名对应端口  
-export PORT=${PORT:-'31565'}                     # ARGO端口不填自动获取
-export SUB_TOKEN=${SUB_TOKEN:-'sub'}
+export SUB_TOKEN=${SUB_TOKEN:-${UUID:0:8}}
 export CHAT_ID=${CHAT_ID:-'6992418262'} 
 export BOT_TOKEN=${BOT_TOKEN:-'6373229598:AAEvykN1CpJNXqTnUpNh7OwUfbXtF_4Rb3w'} 
 
@@ -268,7 +268,7 @@ NEZHA_SERVER=${NEZHA_SERVER}
 NEZHA_PORT=${NEZHA_PORT}
 NEZHA_KEY=${NEZHA_KEY}
 ARGO_DOMAIN=${ARGO_DOMAIN}
-ARGO_AUTH='${ARGO_AUTH}'
+ARGO_AUTH=$([[ -z "$ARGO_AUTH" ]] && echo "" || ([[ "$ARGO_AUTH" =~ ^\{.* ]] && echo "'$ARGO_AUTH'" || echo "$ARGO_AUTH"))
 EOF
     devil www add ${USERNAME}.serv00.net php > /dev/null 2>&1
     devil www add keep.${USERNAME}.serv00.net nodejs /usr/local/bin/node18 > /dev/null 2>&1
@@ -285,17 +285,16 @@ EOF
     devil www options keep.${USERNAME}.serv00.net sslonly on > /dev/null 2>&1
     if devil www restart keep.${USERNAME}.serv00.net 2>&1 | grep -q "succesfully"; then
         green "\n全自动保活服务安装成功\n"
-        green "========================================================"
-        purple "\n访问 https://keep.${USERNAME}.serv00.net/status 查看进程状态\n"
-        yellow "访问 https://keep.${USERNAME}.serv00.net/start 调起保活程序\n"
+        green "========================================================\n"
+        purple "访问 https://keep.${USERNAME}.serv00.net/stop 结束进程\n"
         purple "访问 https://keep.${USERNAME}.serv00.net/list 全部进程列表\n"
-        purple "访问 https://keep.${USERNAME}.serv00.net/stop 结束进程和保活\n"
+        yellow "访问 https://keep.${USERNAME}.serv00.net/start 调起保活程序\n"
+        purple "访问 https://keep.${USERNAME}.serv00.net/status 查看进程状态\n"
         green "========================================================"
-        yellow "如发现掉线访问https://keep.${USERNAME}.serv00.net/start唤醒,或者用https://console.cron-job.org在线访问网页自动唤醒\n"
-        purple "如果需要Telegram通知，请先在Telegram @Botfather 申请 Bot-Token，并带CHAT_ID和BOT_TOKEN环境变量运行\n\n"
-        
+        curl -sk "https://keep.${USERNAME}.serv00.net/start" | grep -q "running" && green "\n所有服务都运行正常,全自动保活任务添加成功\n" || red "\n存在未运行的进程,请访问 https://keep.${USERNAME}.serv00.net/status 检查,建议执行以下命令后重装: \ndevil www del $USERNAME.serv00.net\ndevil www del keep.$USERNAME.serv00.net\nrm -rf $HOME/$USERNAME/domains/*\nshopt -s extglob dotglob\nrm -rf $HOME/!(domains|mail|repo)\n"
+        purple "如果需要Telegram通知,请先在Telegram @Botfather 申请 Bot-Token,并带CHAT_ID和BOT_TOKEN环境变量运行\n\n"
     else
-        red "全自动保活服务安装失败,请删除所有文件夹后重试\n"
+        red "全自动保活服务安装失败: \n${yellow}devil www del $USERNAME.serv00.net\ndevil www del keep.$USERNAME.serv00.net\nrm -rf $HOME/$USERNAME/domains/*\nshopt -s extglob dotglob\nrm -rf $HOME/!(domains|mail|repo)\n${red}请依次执行上述命令后重新安装!"
     fi
 }
 
